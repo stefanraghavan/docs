@@ -1,33 +1,133 @@
 ---
 title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
 ---
+The Formula Insight API converts raw Excel files into structured, labeled JSON data, capturing semantic context for every cell. This allows for automating processes that rely on complex spreadsheet data. For example, the output can be processed and stored in a vector database for Retrieval-Augmented Generation (RAG), enabling subsequent usage with Large Language Models (LLMs).
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+Currently, the API works best for labeling financial models. We are working on expanding the capabilities to more general use cases. 
+## Obtaining an API Key
 
-## Welcome
+You can obtain and API key by filling out the following form: https://forms.gle/R5RvCNYN8ANsamUFA
+After submitting the form, an API key will be sent via email. The API is valid for up to 7 days.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+## Making Requests
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+You can paste the python code below directly into your script. Replace `'your_api_key'` with the API key that was emailed. Replace `file_path` with the path to your excel file. To extract data from a specific sheet, specify the `sheet_name`. To extract data from all sheets, set `sheet_name = 'all'`.
 
-## Authentication
+```python
+import requests
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+# API Key given to user
+headers = {'X-API-Key': 'your_api_key'} 
+
+# Define the endpoint URL
+url = 'https://api.formulainsight.io/analyze-spreadsheet'
+
+# Define the path to the file you want to upload
+file_path = 'path_to_spreadsheet' # Example: /Users/stefanraghavan/Desktop/local-github/example-spreadsheets/INSM Model.xlsx
+
+# Define the sheet name you want to process
+sheet_name = 'IS'  # Replace 'IS' with the desired sheet name, or use 'all' for all sheets
+
+# Define the contextual_output parameter
+contextual_labels = 'yes'  # Enter 'yes' to output contextual labels, 'no' for raw json output
+
+# Make the POST request
+with open(file_path, 'rb') as file:
+    files = {'file': file}
+    data = {
+        'sheet_name': sheet_name,
+        'contextual_output': contextual_labels
+    }
+    response = requests.post(url, headers=headers, files=files, data=data)
+
+# Print the response from the server
+print(response.json())
+```
+## Repsonse - Labels object
+
+The labels object contains data for every number cell, including its row and column labels. The labels are organized hierarchically from the innermost (lowest level) to the outermost (highest level).  For example, rowLabel1 is the innermost label, while rowLabel4 is the outermost label.
+
+You can return the labels object by setting `contextual_labels = 'no'` in the API call
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+  "labels": {
+    "IS": [
+      {
+        "spreadsheetName": "INSM Model.xlsx",
+        "sheetName": "IS",
+        "cellAddress": "IS!C5",
+        "cellValue": 136.467,
+        "displayedValue": "136",
+        "cellFormula": "=136.467",
+        "columnLabel1": "2019A",
+        "rowLabel1": "ARIKAYCE",
+        "rowLabel2": "Product Sales",
+        "rowLabel3": "Income Statement ($M)",
+      },
+      ...
+      {
+        "spreadsheetName": "INSM Model.xlsx",
+        "sheetName": "IS",
+        "cellAddress": "IS!Y30",
+        "cellValue": 0,
+        "displayedValue": "0",
+        "cellFormula": "",
+        "columnLabel1": "2Q24E",
+        "rowLabel1": "Change in fair value of interest rate swap",
+        "rowLabel2": "Operating Income",
+        "rowLabel3": "Income Statement ($M)",
+      }
+    ]
   }
-]
 ```
+
+## Repsonse - Contextual Labels object
+
+The contextual labels object organizes the label object in coherent sentances for full context. This format makes it ideal for storing Excel data in a vector database for RAG, enabling subsequent usage with LLMs.
+
+You can return the contextual labels object by setting `contextual_labels = 'yes'` in the API call
+```json
+  "contextual_labels": {
+    "IS": [
+      "136.467, displayed as 136, represents the ARIKAYCE for Product Sales for Income Statement ($M) for the time period 2019A. It is calculated using the formula =136.467. This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!C5.",
+      ...
+      "0, displayed as 0, represents the Change in fair value of interest rate swap for Operating Income for Income Statement ($M) for the time period 2Q24E. This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!Y30.",
+    ]
+  }
+```
+
+## Example Usage
+
+Let's use the API to label the following income statement data and store it in the labels object.
+
+<Frame>
+  <img src="/images/is_pic.png" style={{ borderRadius: '0.5rem' }} />
+</Frame>
+
+Running the API call with `contextual_labels = 'no'` returns the following labels JSON (only showing a single cell label):
+
+```json
+      {
+        "spreadsheetName": "INSM Model.xlsx",
+        "sheetName": "IS",
+        "cellAddress": "IS!M8",
+        "cellValue": "NM",
+        "displayedValue": "NM",
+        "cellFormula": "=IFERROR(M7/H7-1,\"NM\")",
+        "columnLabel1": "2021A",
+        "rowLabel1": "y/y growth",
+        "rowLabel2": "Brensocatib",
+        "rowLabel3": "Product Sales",
+        "rowLabel4": "Income Statement ($M)",
+      }
+```
+Running the API call with `contextual_labels = 'yes'` returns the following contextual_labels JSON (only showing a single cell label):
+
+```json
+  "contextual_labels": {
+    "IS": [
+      "NM, displayed as NM, represents the y/y growth for Brensocatib for Product Sales for Income Statement ($M) for the time period 2021A. It is calculated using the formula =IFERROR(M7/H7-1,\"NM\"). This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!M8.",
+    ]
+  }
+```
+
