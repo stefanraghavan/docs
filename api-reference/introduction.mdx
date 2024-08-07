@@ -3,15 +3,17 @@ title: 'Introduction'
 ---
 The Formula Insight API converts raw Excel files into structured, labeled JSON data, capturing semantic context for every cell. This allows for automating processes that rely on complex spreadsheet data. For example, the output can be processed and stored in a vector database for Retrieval-Augmented Generation (RAG), enabling subsequent usage with Large Language Models (LLMs).
 
-Currently, the API works best for labeling financial models. We are working on expanding the capabilities to more general use cases. 
+Currently, the API works best for labeling financial models. We are working on expanding the capabilities to more general use cases.
+
 ## Obtaining an API Key
 
-You can obtain and API key by filling out the following form: https://forms.gle/R5RvCNYN8ANsamUFA
-After submitting the form, an API key will be sent via email. The API is valid for up to 7 days.
+You can obtain an API key by filling out the following form: https://forms.gle/R5RvCNYN8ANsamUFA.
+
+After submitting the form, an API key will be sent via email. The API key is valid for up to 7 days.
 
 ## Making Requests
 
-You can paste the python code below directly into your script. Replace `'your_api_key'` with the API key that was emailed. Replace `file_path` with the path to your excel file. To extract data from a specific sheet, specify the `sheet_name`. To extract data from all sheets, set `sheet_name = 'all'`.
+You can paste the Python code below directly into your script. Replace `'your_api_key'` with the API key that was emailed. Replace `file_path` with the path to your Excel file. To extract data from a specific sheet, specify the `sheet_name`. To extract data from all sheets, set `sheet_name = 'all'`.
 
 ```python
 import requests
@@ -45,7 +47,7 @@ print(response.json())
 ```
 ## Repsonse - Labels object
 
-The labels object contains data for every number cell, including its row and column labels. The labels are organized hierarchically from the innermost (lowest level) to the outermost (highest level).  For example, rowLabel1 is the innermost label, while rowLabel4 is the outermost label.
+The labels object contains data for every number cell, including its row and column labels. The labels are organized hierarchically from the innermost (lowest level) to the outermost (highest level). For example, rowLabel1 is the innermost label, while rowLabel4 is the outermost label.
 
 You can return the labels object by setting `contextual_labels = 'no'` in the API call
 
