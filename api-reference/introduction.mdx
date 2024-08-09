@@ -7,9 +7,7 @@ Currently, the API works best for labeling financial models. We are working on e
 
 ## Obtaining an API Key
 
-You can obtain an API key by filling out the following form: https://forms.gle/R5RvCNYN8ANsamUFA.
-
-After submitting the form, an API key will be sent via email. The API key is valid for up to 7 days.
+We are offering limited access to our beta. To request an API key, please fill out the following form: https://forms.gle/R5RvCNYN8ANsamUFA. If your submission is approved, we’ll send you an API key via email.
 
 ## Making Requests
 
@@ -49,7 +47,7 @@ print(response.json())
 
 The labels object contains data for every number cell, including its row and column labels. The labels are organized hierarchically from the innermost (lowest level) to the outermost (highest level). For example, rowLabel1 is the innermost label, while rowLabel4 is the outermost label.
 
-You can return the labels object by setting `contextual_labels = 'no'` in the API call
+You can return the labels object by setting `contextual_labels = 'no'` in the API call.
 
 ```json
   "labels": {
@@ -85,9 +83,9 @@ You can return the labels object by setting `contextual_labels = 'no'` in the AP
 
 ## Repsonse - Contextual Labels object
 
-The contextual labels object organizes the label object in coherent sentances for full context. This format makes it ideal for storing Excel data in a vector database for RAG, enabling subsequent usage with LLMs.
+The contextual labels object organizes the label data into coherent sentences, providing full context. This format is ideal for storing Excel data in a vector database for RAG, enabling subsequent usage with LLMs.
 
-You can return the contextual labels object by setting `contextual_labels = 'yes'` in the API call
+You can return the contextual labels object by setting `contextual_labels = 'yes'` in the API call.
 ```json
   "contextual_labels": {
     "IS": [
@@ -132,4 +130,3 @@ Running the API call with `contextual_labels = 'yes'` returns the following cont
     ]
   }
 ```
-
