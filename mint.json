@@ -3,6 +3,10 @@
   "name": "Formula Insight",
   "logo": "/images/fi_logo.png",
   "favicon": "/favicon.svg",
+  "modeToggle": {
+    "default": "light",
+    "isHidden": true
+  },
   "colors": {
     "primary": "#00008B",
     "light": "#4682B4",  
