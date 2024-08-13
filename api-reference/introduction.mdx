@@ -44,9 +44,9 @@ The labels object represents a comprehensive data structure for each numerical c
 4. `date`: The time period associated with this data point, often a fiscal year or quarter (e.g., "2021A" for actual 2021 data).
 5. `metric`: The most specific label for this data point, typically the row header directly associated with the cell (e.g., "R&D Expenses").
 6. `category1`, `category2`, etc.: These represent increasingly broader categories that the metric falls under, forming a hierarchy. The numbering goes from more specific (category1) to more general (category2, category3, etc.).
-7. `description`: A human-readable sentence summarizing the key information about this data point, including its metric, categories, date, value, and source spreadsheet.
-8. `last_updated`: A timestamp indicating when this data was last refreshed or updated in the system, providing data freshness information.
-9. `source`: Detailed information about where this data originates including spreadsheet, sheet and cell references. 
+7. `description`: A contextual sentence summarizing the key information about this data point, including its metric, categories, date, value, and source spreadsheet.
+8. `last_updated`: A timestamp indicating when this cell was last updated in the model.
+9. `source`: Detailed references including spreadsheet name, sheet name and cell address. 
 
 ```json
   "labels": {
