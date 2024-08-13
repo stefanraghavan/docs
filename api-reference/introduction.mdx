@@ -1,7 +1,7 @@
 ---
 title: 'Introduction'
 ---
-The Formula Insight API converts raw Excel files into structured, labeled JSON data, capturing semantic context for every cell. This allows for automating processes that rely on complex spreadsheet data. For example, the output can be processed and stored in a vector database for Retrieval-Augmented Generation (RAG), enabling subsequent usage with Large Language Models (LLMs).
+The Formula Insight API converts raw Excel files into structured, labeled JSON format, capturing semantic context for every cell. This allows for automating processes that rely on complex spreadsheet data. For example, the output can be processed and stored in a vector database for Retrieval-Augmented Generation (RAG), enabling subsequent usage with Large Language Models (LLMs).
 
 Currently, the API works best for labeling financial models. We are working on expanding the capabilities to more general use cases.
 
@@ -17,81 +17,85 @@ You can paste the Python code below directly into your script. Replace `'your_ap
 import requests
 
 # API Key given to user
-headers = {'X-API-Key': 'your_api_key'} 
+apikey = 'your_api_key' 
 
-# Define the endpoint URL
+# Define the URL of the endpoint
 url = 'https://api.formulainsight.io/analyze-spreadsheet'
 
-# Define the path to the file you want to upload
-file_path = 'path_to_spreadsheet' # Example: /Users/stefanraghavan/Desktop/local-github/example-spreadsheets/INSM Model.xlsx
+# Define the path to the Excel file you want to upload
+file_path = '/Users/stefanraghavan/Desktop/local-github/example-spreadsheets/INSM Model.xlsx'
 
 # Define the sheet name you want to process
-sheet_name = 'IS'  # Replace 'IS' with the desired sheet name, or use 'all' for all sheets
-
-# Define the contextual_output parameter
-contextual_labels = 'yes'  # Enter 'yes' to output contextual labels, 'no' for raw json output
+sheet = 'IS'  # Replace 'IS' with the desired sheet name, or use 'all' for all sheets
 
 # Make the POST request
 with open(file_path, 'rb') as file:
-    files = {'file': file}
-    data = {
-        'sheet_name': sheet_name,
-        'contextual_output': contextual_labels
-    }
-    response = requests.post(url, headers=headers, files=files, data=data)
+    response = requests.post(url, headers={'X-API-Key': apikey}, files={'file': file}, data={'sheet_name': sheet})
 
 # Print the response from the server
 print(response.json())
 ```
 ## Repsonse - Labels object
 
-The labels object contains data for every number cell, including its row and column labels. The labels are organized hierarchically from the innermost (lowest level) to the outermost (highest level). For example, rowLabel1 is the innermost label, while rowLabel4 is the outermost label.
+The labels object represents a comprehensive data structure for each numerical cell in the spreadsheet, providing both the cell's value and its contextual information. This structure is designed to capture the hierarchical nature of financial data, from including categories for specific metrics. Here's a detailed breakdown of each field:
+1. `value`: The actual numerical value of the cell, typically a floating-point number.
+2. `displayed_value`: A string representation of the value as it appears in the spreadsheet, which may include formatting (e.g., number of decimal places).
+3. `formula`: If applicable, the Excel formula used to calculate the cell's value. This provides transparency into the data's derivation.
+4. `date`: The time period associated with this data point, often a fiscal year or quarter (e.g., "2021A" for actual 2021 data).
+5. `metric`: The most specific label for this data point, typically the row header directly associated with the cell (e.g., "R&D Expenses").
+6. `category1`, `category2`, etc.: These represent increasingly broader categories that the metric falls under, forming a hierarchy. The numbering goes from more specific (category1) to more general (category2, category3, etc.). For example:
 
-You can return the labels object by setting `contextual_labels = 'no'` in the API call.
+                    -`category1`: "Growth (y/y)" indicates this is a year-over-year growth metric.
+
+                    -`category2`: "Income Statement ($M)" shows this is part of the income statement, measured in millions of dollars.
+
+
+7. `description`: A human-readable sentence summarizing the key information about this data point, including its metric, categories, date, value, and source spreadsheet.
+8. `last_updated`: A timestamp indicating when this data was last refreshed or updated in the system, providing data freshness information.
+9. `source`: Detailed information about where this data originates:
+
+                    -`spreadsheet`: The name of the Excel file containing this data.
+                    
+                    -`sheet`: The specific worksheet within the spreadsheet where this cell is located.
+                    
+                    -`cell`:` The exact cell reference (e.g., "IS!M53") for pinpoint traceability.
 
 ```json
   "labels": {
     "IS": [
       {
-        "spreadsheetName": "INSM Model.xlsx",
-        "sheetName": "IS",
-        "cellAddress": "IS!C5",
-        "cellValue": 136.467,
-        "displayedValue": "136",
-        "cellFormula": "=136.467",
-        "columnLabel1": "2019A",
-        "rowLabel1": "ARIKAYCE",
-        "rowLabel2": "Product Sales",
-        "rowLabel3": "Income Statement ($M)",
+        "value": 0.51,
+        "displayed_value": "0.51",
+        "formula": "=IFERROR(M21/H21-1,\"NM\")",
+        "date": "2021A",
+        "metric": "R&D Expenses",
+        "category1": "Growth (y/y)",
+        "category2": "Income Statement ($M)",
+        "description": "R&D Expenses for Growth (y/y) for Income Statement ($M) for 2021A is 0.51 in INSM Model.xlsx",
+        "last_updated": "2024-08-13T07:48:19.289",
+        "source": {
+          "spreadsheet": "INSM Model.xlsx",
+          "sheet": "IS",
+          "cell": "IS!M53"
+        }
       },
       ...
       {
-        "spreadsheetName": "INSM Model.xlsx",
-        "sheetName": "IS",
-        "cellAddress": "IS!Y30",
-        "cellValue": 0,
-        "displayedValue": "0",
-        "cellFormula": "",
-        "columnLabel1": "2Q24E",
-        "rowLabel1": "Change in fair value of interest rate swap",
-        "rowLabel2": "Operating Income",
-        "rowLabel3": "Income Statement ($M)",
-      }
-    ]
-  }
-```
-
-## Repsonse - Contextual Labels object
-
-The contextual labels object organizes the label data into coherent sentences, providing full context. This format is ideal for storing Excel data in a vector database for RAG, enabling subsequent usage with LLMs.
-
-You can return the contextual labels object by setting `contextual_labels = 'yes'` in the API call.
-```json
-  "contextual_labels": {
-    "IS": [
-      "136.467, displayed as 136, represents the ARIKAYCE for Product Sales for Income Statement ($M) for the time period 2019A. It is calculated using the formula =136.467. This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!C5.",
-      ...
-      "0, displayed as 0, represents the Change in fair value of interest rate swap for Operating Income for Income Statement ($M) for the time period 2Q24E. This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!Y30.",
+        "value": 0.23,
+        "displayed_value": "0.23",
+        "formula": "=IFERROR(E19/E11,\"NM\")",
+        "date": "2Q20A",
+        "metric": "Base COGs (% of Product Sales)",
+        "category1": "Margin Analysis",
+        "category2": "Income Statement ($M)",
+        "description": "Base COGs (% of Product Sales) for Margin Analysis for Income Statement ($M) for 2Q20A is 0.23 in INSM Model.xlsx",
+        "last_updated": "2024-08-13T07:48:19.289",
+        "source": {
+          "spreadsheet": "INSM Model.xlsx",
+          "sheet": "IS",
+          "cell": "IS!E60"
+        }
+      },
     ]
   }
 ```
@@ -104,29 +108,24 @@ Let's use the API to label the following income statement data and store it in t
   <img src="/images/is_pic.png" style={{ borderRadius: '0.5rem' }} />
 </Frame>
 
-Running the API call with `contextual_labels = 'no'` returns the following labels JSON (only showing a single cell label):
+Running the API call returns the following label for the first numerical cell:
 
 ```json
       {
-        "spreadsheetName": "INSM Model.xlsx",
-        "sheetName": "IS",
-        "cellAddress": "IS!M8",
-        "cellValue": "NM",
-        "displayedValue": "NM",
-        "cellFormula": "=IFERROR(M7/H7-1,\"NM\")",
-        "columnLabel1": "2021A",
-        "rowLabel1": "y/y growth",
-        "rowLabel2": "Brensocatib",
-        "rowLabel3": "Product Sales",
-        "rowLabel4": "Income Statement ($M)",
+        "value": 136.47,
+        "displayed_value": "136.47",
+        "formula": "=136.467",
+        "date": "2019A",
+        "metric": "ARIKAYCE",
+        "category1": "Product Sales",
+        "category2": "Income Statement ($M)",
+        "description": "ARIKAYCE for Product Sales for Income Statement ($M) for 2019A is 136.47 in INSM Model.xlsx",
+        "last_updated": "2024-08-13T07:48:19.289",
+        "source": {
+          "spreadsheet": "INSM Model.xlsx",
+          "sheet": "IS",
+          "cell": "IS!C5"
+        }
       }
 ```
-Running the API call with `contextual_labels = 'yes'` returns the following contextual_labels JSON (only showing a single cell label):
 
-```json
-  "contextual_labels": {
-    "IS": [
-      "NM, displayed as NM, represents the y/y growth for Brensocatib for Product Sales for Income Statement ($M) for the time period 2021A. It is calculated using the formula =IFERROR(M7/H7-1,\"NM\"). This cell is located in the spreadsheet INSM Model.xlsx on the IS sheet and is stored in cell address IS!M8.",
-    ]
-  }
-```
